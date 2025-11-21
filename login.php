@@ -19,37 +19,63 @@ session_start();
       include "connection.php";
 
       if (isset($_POST['login'])) {
-        $email = $_POST['email'];
+        $email = sanitizeInput($_POST['email']);
         $pass  = $_POST['password'];
 
-        // Use prepared statement to prevent SQL injection
-        $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $result = $stmt->get_result();
-
-        if ($result->num_rows > 0) {
-          $row = $result->fetch_assoc();
-
-          // Verify hashed password
-          if (password_verify($pass, $row['password'])) {
-            $_SESSION['id'] = $row['id'];
-            $_SESSION['username'] = $row['username'];
-            header("Location: home.php");
-            exit();
-          } else {
-            echo "<div class='message'><p>Wrong Password</p></div><br>";
-            echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
-          }
-        } else {
-          echo "<div class='message'><p>Wrong Email or Password</p></div><br>";
+        // Verify CSRF token
+        if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+          echo "<div class='message'><p>Security token validation failed. Please try again.</p></div><br>";
           echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+        } else {
+          // Check rate limiting
+          $rateCheck = recordFailedLogin($email);
+          if (!$rateCheck['allowed']) {
+            echo "<div class='message'><p>Too many login attempts. Please try again in 15 minutes.</p></div><br>";
+            echo "<a href='index.php'><button class='btn'>Go Home</button></a>";
+          } else {
+            // Use prepared statement to prevent SQL injection
+            $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
+            $stmt->bind_param("s", $email);
+            $stmt->execute();
+            $result = $stmt->get_result();
+
+            if ($result->num_rows > 0) {
+              $row = $result->fetch_assoc();
+
+              // Verify hashed password
+              if (password_verify($pass, $row['password'])) {
+                // Clear rate limit on successful login
+                clearRateLimit('login_' . $email);
+
+                $_SESSION['id'] = $row['id'];
+                $_SESSION['username'] = $row['username'];
+
+                // Regenerate session after successful login
+                session_regenerate_id(true);
+
+                // Log successful login
+                logSecurityEvent('login_success', 'User logged in successfully', $email);
+
+                header("Location: home.php");
+                exit();
+              } else {
+                logSecurityEvent('login_failure', 'Invalid password attempt', $email);
+                echo "<div class='message'><p>Wrong Password</p></div><br>";
+                echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+              }
+            } else {
+              logSecurityEvent('login_failure', 'User not found', $email);
+              echo "<div class='message'><p>Wrong Email or Password</p></div><br>";
+              echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+            }
+            $stmt->close();
+          }
         }
-      } else {
       ?>
         <header>Login</header>
         <hr>
         <form action="#" method="POST">
+          <?php echo csrfTokenField(); ?>
           <div class="input-container">
             <i class="fa fa-envelope icon"></i>
             <input class="input-field" type="email" placeholder="Email Address" name="email" required>
@@ -94,4 +120,3 @@ session_start();
 </body>
 
 </html>
-

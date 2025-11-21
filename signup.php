@@ -22,44 +22,81 @@ session_start();
       include "connection.php";
 
       if (isset($_POST['register'])) {
-        $name  = trim($_POST['username']);
-        $email = trim($_POST['email']);
-        $pass  = $_POST['password'];
-        $cpass = $_POST['cpass'];
-
-        // Check if email already exists using prepared statement
-        $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
-        $stmt->bind_param("s", $email);
-        $stmt->execute();
-        $stmt->store_result();
-
-        if ($stmt->num_rows > 0) {
-          echo "<div class='message'><p>This email is already registered. Try another one.</p></div><br>";
+        // Verify CSRF token first
+        if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
+          echo "<div class='message'><p>Security token validation failed. Please try again.</p></div><br>";
           echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
         } else {
-          if ($pass === $cpass) {
-            // Hash password securely
-            $passwd = password_hash($pass, PASSWORD_DEFAULT);
+          $name  = sanitizeInput(trim($_POST['username']));
+          $email = sanitizeInput(trim($_POST['email']));
+          $pass  = $_POST['password'];
+          $cpass = $_POST['cpass'];
 
-            // Insert new user
-            $stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
-            $stmt->bind_param("sss", $name, $email, $passwd);
-
-            if ($stmt->execute()) {
-              echo "<div class='message'><p>You are registered successfully!</p></div><br>";
-              echo "<a href='login.php'><button class='btn'>Login Now</button></a>";
-            } else {
-              echo "<div class='message'><p>Registration failed. Please try again.</p></div><br>";
-              echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
-            }
-          } else {
-            echo "<div class='message'><p>Passwords do not match.</p></div><br>";
+          // Validate inputs
+          if (!isValidUsername($name)) {
+            echo "<div class='message'><p>Username must be 3-20 characters (alphanumeric and underscore only).</p></div><br>";
             echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+          } elseif (!isValidEmail($email)) {
+            echo "<div class='message'><p>Please enter a valid email address.</p></div><br>";
+            echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+          } else {
+            $passwordValidation = validatePassword($pass);
+            if (!$passwordValidation['valid']) {
+              echo "<div class='message'><p>" . implode('<br>', $passwordValidation['errors']) . "</p></div><br>";
+              echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+            } elseif ($pass !== $cpass) {
+              echo "<div class='message'><p>Passwords do not match.</p></div><br>";
+              echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+            } else {
+              // Check rate limiting
+              $rateCheck = checkRateLimit('signup_' . $email, 3, 3600); // 3 signup attempts per hour
+              if (!$rateCheck['allowed']) {
+                echo "<div class='message'><p>Too many signup attempts. Please try again in 1 hour.</p></div><br>";
+                echo "<a href='index.php'><button class='btn'>Go Home</button></a>";
+              } else {
+                // Check if email already exists using prepared statement
+                $stmt = $conn->prepare("SELECT id FROM users WHERE email = ?");
+                $stmt->bind_param("s", $email);
+                $stmt->execute();
+                $stmt->store_result();
+
+                if ($stmt->num_rows > 0) {
+                  logSecurityEvent('signup_failure', 'Email already registered', $email);
+                  echo "<div class='message'><p>This email is already registered. Try another one.</p></div><br>";
+                  echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+                } else {
+                  // Hash password securely with higher cost
+                  $passwd = password_hash($pass, PASSWORD_BCRYPT, ['cost' => 12]);
+
+                  // Insert new user
+                  $insert_stmt = $conn->prepare("INSERT INTO users (username, email, password) VALUES (?, ?, ?)");
+                  $insert_stmt->bind_param("sss", $name, $email, $passwd);
+
+                  if ($insert_stmt->execute()) {
+                    logSecurityEvent('signup_success', 'New user registered', $email);
+
+                    // Send welcome email
+                    include_once 'email_config.php';
+                    sendWelcomeEmail($email, $name);
+
+                    echo "<div class='message'><p>You are registered successfully! Check your email for a welcome message.</p></div><br>";
+                    echo "<a href='login.php'><button class='btn'>Login Now</button></a>";
+                  } else {
+                    logSecurityEvent('signup_failure', 'Database insertion error', $email);
+                    echo "<div class='message'><p>Registration failed. Please try again.</p></div><br>";
+                    echo "<a href='signup.php'><button class='btn'>Go Back</button></a>";
+                  }
+                  $insert_stmt->close();
+                }
+                $stmt->close();
+              }
+            }
           }
         }
       } else {
       ?>
         <form action="#" method="POST">
+          <?php echo csrfTokenField(); ?>
           <div class="input-container">
             <i class="fa fa-user icon"></i>
             <input class="input-field" type="text" placeholder="Username" name="username" required>
@@ -107,5 +144,5 @@ session_start();
     })
   </script>
 </body>
-</html>
 
+</html>

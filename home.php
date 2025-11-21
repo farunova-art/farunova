@@ -7,9 +7,9 @@ if (!isset($_SESSION['username'])) {
     header("location:login.php");
 }
 
-
-
-
+// Redirect to dashboard
+header("location:dashboard.php");
+exit();
 ?>
 
 <!DOCTYPE html>
@@ -103,7 +103,7 @@ if (!isset($_SESSION['username'])) {
         <center>Welcome
             <?php
             // echo $_SESSION['valid'];
-            
+
             echo $_SESSION['username'];
 
             ?>
