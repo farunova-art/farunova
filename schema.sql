@@ -4,8 +4,8 @@
 -- All duplicates removed, issues fixed
 
 -- Create database if not exists
-CREATE DATABASE IF NOT EXISTS farunova-ecommerce CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-USE farunova-ecommerce;
+CREATE DATABASE IF NOT EXISTS farunova_ecommerce CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE farunova_ecommerce;
 
 -- ==========================================
 -- PHASE 1-2: CORE TABLES

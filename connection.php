@@ -1,9 +1,9 @@
 <?php
 // Database Configuration
 $server   = "localhost";      // Database server (use localhost for local development)
-$username = "root";           // Database user
-$password = "";               // Database password
-$db       = "GROUP1";         // Database name
+$username = "appuser";           // Database user
+$password = "FarunovaPass@2025";               // Database password
+$db       = "farunova_ecommerce";        // Database name
 
 // Create connection
 $conn = new mysqli($server, $username, $password, $db);
