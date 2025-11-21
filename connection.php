@@ -3,7 +3,7 @@
 $server   = "localhost";      // Database server (use localhost for local development)
 $username = "appuser";           // Database user
 $password = "FarunovaPass@2025";               // Database password
-$db       = "farunova_ecommerce";        // Database name
+$db       = "farunova_ecommerce";         // Database name
 
 // Create connection
 $conn = new mysqli($server, $username, $password, $db);
@@ -15,11 +15,12 @@ $conn->set_charset("utf8mb4");
 if ($conn->connect_error) {
     // Log error securely without exposing details to user
     error_log("Database connection failed: " . $conn->connect_error);
-    die("Unable to connect to database. Please try again later.");
+    // Show user-friendly error
+    die("Database connection failed. Please contact administrator. Error has been logged.");
 }
 
 // Define base URL for the application
-define('BASE_URL', 'http://localhost/farunova/');
+define('BASE_URL', 'http://40.127.11.133/');
 
 // Enforce HTTPS in production
 if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
