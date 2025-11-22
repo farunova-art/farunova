@@ -15,20 +15,20 @@
       <?php
       include "connection.php";
 
+      $errorMessage = '';
+
       if (isset($_POST['login'])) {
         $email = sanitizeInput($_POST['email']);
         $pass  = $_POST['password'];
 
         // Verify CSRF token
         if (!verifyCSRFToken($_POST['csrf_token'] ?? '')) {
-          echo "<div class='message'><p>Security token validation failed. Please try again.</p></div><br>";
-          echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+          $errorMessage = "Security token validation failed. Please try again.";
         } else {
           // Check rate limiting
           $rateCheck = recordFailedLogin($email);
           if (!$rateCheck['allowed']) {
-            echo "<div class='message'><p>Too many login attempts. Please try again in 15 minutes.</p></div><br>";
-            echo "<a href='index.php'><button class='btn'>Go Home</button></a>";
+            $errorMessage = "Too many login attempts. Please try again in 15 minutes.";
           } else {
             // Use prepared statement to prevent SQL injection
             $stmt = $conn->prepare("SELECT id, username, password FROM users WHERE email = ?");
@@ -57,20 +57,28 @@
                 exit();
               } else {
                 logSecurityEvent('login_failure', 'Invalid password attempt', $email);
-                echo "<div class='message'><p>Wrong Password</p></div><br>";
-                echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+                $errorMessage = "Wrong Password";
               }
             } else {
               logSecurityEvent('login_failure', 'User not found', $email);
-              echo "<div class='message'><p>Wrong Email or Password</p></div><br>";
-              echo "<a href='login.php'><button class='btn'>Go Back</button></a>";
+              $errorMessage = "Wrong Email or Password";
             }
             $stmt->close();
           }
         }
+      }
       ?>
-        <header>Login</header>
-        <hr>
+
+      <header>Login</header>
+      <hr>
+
+      <?php if ($errorMessage): ?>
+        <div class='message'>
+          <p><?php echo $errorMessage; ?></p>
+        </div><br>
+        <a href='login.php'><button class='btn'>Go Back</button></a>
+      <?php else: ?>
+
         <form action="#" method="POST">
           <?php echo csrfTokenField(); ?>
           <div class="input-container">
@@ -96,9 +104,8 @@
             Don't have an account? <a href="signup.php">Signup Now</a>
           </div>
         </form>
-      <?php
-      }
-      ?>
+
+      <?php endif; ?>
     </div>
   </div>
 
