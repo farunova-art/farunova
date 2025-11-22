@@ -1,4 +1,10 @@
 <?php
+// Set session configuration for security BEFORE starting session
+ini_set('session.cookie_httponly', '1');
+ini_set('session.use_only_cookies', '1');
+ini_set('session.gc_maxlifetime', '3600');
+ini_set('session.cookie_samesite', 'Strict');
+
 // Database Configuration
 $server   = "localhost";      // Database server (use localhost for local development)
 $username = "appuser";           // Database user
@@ -115,12 +121,10 @@ try {
 // Add security headers to all responses
 addSecurityHeaders();
 
-// Set session configuration for security
-ini_set('session.cookie_secure', isset($_SERVER['HTTPS']));
-ini_set('session.cookie_httponly', '1');
-ini_set('session.cookie_samesite', 'Strict');
-ini_set('session.use_only_cookies', '1');
-ini_set('session.gc_maxlifetime', '3600');
+// Set additional session security settings (after session starts via security.php)
+if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
+    ini_set('session.cookie_secure', '1');
+}
 
 // Regenerate session ID periodically for security
 if (!isset($_SESSION['last_regeneration'])) {
