@@ -103,16 +103,24 @@
   </div>
 
   <script>
-    const toggle = document.querySelector(".toggle"),
-      input = document.querySelector(".password");
-    toggle.addEventListener("click", () => {
-      if (input.type === "password") {
-        input.type = "text";
-        toggle.classList.replace("fa-eye-slash", "fa-eye");
-      } else {
-        input.type = "password";
+    // Wait for DOM to load before accessing elements
+    document.addEventListener("DOMContentLoaded", function() {
+      const toggle = document.querySelector(".toggle");
+      const input = document.querySelector(".password");
+
+      // Only add listener if elements exist
+      if (toggle && input) {
+        toggle.addEventListener("click", () => {
+          if (input.type === "password") {
+            input.type = "text";
+            toggle.classList.replace("fa-eye-slash", "fa-eye");
+          } else {
+            input.type = "password";
+            toggle.classList.replace("fa-eye", "fa-eye-slash");
+          }
+        });
       }
-    })
+    });
   </script>
 </body>
 
