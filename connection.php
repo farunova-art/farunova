@@ -41,7 +41,7 @@ error_log("[" . date('Y-m-d H:i:s') . "] Database connection successful!");
 echo "<script>console.log('✓ Database connection established successfully');</script>";
 
 // Define base URL for the application
-define('BASE_URL', 'http://40.127.11.133/');
+define('BASE_URL', 'http://www.farunova.com/');
 
 echo "<script>console.log('BASE_URL: " . BASE_URL . "');</script>";
 
@@ -120,11 +120,6 @@ try {
 
 // Add security headers to all responses
 addSecurityHeaders();
-
-// Set additional session security settings (after session starts via security.php)
-if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') {
-    ini_set('session.cookie_secure', '1');
-}
 
 // Regenerate session ID periodically for security
 if (!isset($_SESSION['last_regeneration'])) {
