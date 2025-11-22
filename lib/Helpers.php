@@ -362,16 +362,7 @@ function getRandomColor()
     return $colors[array_rand($colors)];
 }
 
-/**
- * Validate email format
- * 
- * @param string $email Email to validate
- * @return bool True if valid, false otherwise
- */
-function isValidEmail($email)
-{
-    return filter_var($email, FILTER_VALIDATE_EMAIL) !== false;
-}
+// isValidEmail() is defined in security.php - removed duplicate here
 
 /**
  * Validate phone number
