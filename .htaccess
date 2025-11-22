@@ -1,0 +1,70 @@
+# FARUNOVA Apache Configuration for www.farunova.com and IP Access
+
+# Enable mod_rewrite
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    
+    # Set the base path for rewrites
+    RewriteBase /
+    
+    # Allow direct access to all existing files
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^ - [L]
+    
+    # Allow direct access to all existing directories
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+    
+    # Don't rewrite static assets
+    RewriteCond %{REQUEST_FILENAME} !.*\.(css|js|jpg|jpeg|png|gif|ico|svg|woff|woff2|ttf|eot)$ [NC]
+    
+    # Route all other requests through index.php
+    # This allows friendly URLs while still serving other PHP files directly
+    RewriteCond %{REQUEST_URI} !^/index\.php [NC]
+    RewriteCond %{REQUEST_URI} \.php$ [NC]
+    RewriteRule ^ - [L]
+</IfModule>
+
+# Enable gzip compression for performance
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript
+</IfModule>
+
+# Set character encoding
+AddDefaultCharset UTF-8
+
+# Allow access to all PHP files directly (no blocking)
+<FilesMatch "\.php$">
+    Allow from all
+</FilesMatch>
+
+# Security headers
+<IfModule mod_headers.c>
+    # Prevent clickjacking
+    Header always set X-Frame-Options "SAMEORIGIN"
+    
+    # Prevent MIME type sniffing
+    Header always set X-Content-Type-Options "nosniff"
+    
+    # Enable XSS protection
+    Header always set X-XSS-Protection "1; mode=block"
+    
+    # Referrer policy
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Set proper MIME types
+<IfModule mod_mime.c>
+    AddType application/x-httpd-php .php
+    AddType text/css .css
+    AddType application/javascript .js
+    AddType image/svg+xml .svg
+</IfModule>
+
+# Disable directory listing
+Options -Indexes
+
+# Allow .htaccess override
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
