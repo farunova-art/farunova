@@ -78,11 +78,7 @@ function getStatusBadgeColor($status)
     }
 }
 
-// Format currency
-function formatCurrency($amount)
-{
-    return 'KES ' . number_format($amount, 2);
-}
+// formatCurrency() is defined in lib/Helpers.php - removed duplicate here
 ?>
 
 <!DOCTYPE html>
