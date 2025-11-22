@@ -11,6 +11,10 @@ $username = $_SESSION['username'];
 
 // Get user profile info
 $user_stmt = $conn->prepare("SELECT * FROM users WHERE id = ?");
+if (!$user_stmt) {
+    error_log("Error preparing user statement: " . $conn->error);
+    die("Database error. Please contact administrator.");
+}
 $user_stmt->bind_param("i", $user_id);
 $user_stmt->execute();
 $user_result = $user_stmt->get_result();
@@ -24,6 +28,10 @@ $order_stats_stmt = $conn->prepare("SELECT
     COUNT(CASE WHEN status = 'delivered' THEN 1 END) as completed_orders,
     COUNT(CASE WHEN status = 'pending' OR status = 'confirmed' THEN 1 END) as pending_orders
 FROM orders WHERE userId = ?");
+if (!$order_stats_stmt) {
+    error_log("Error preparing stats statement: " . $conn->error);
+    die("Database error. Please contact administrator.");
+}
 $order_stats_stmt->bind_param("i", $user_id);
 $order_stats_stmt->execute();
 $stats_result = $order_stats_stmt->get_result();
@@ -32,18 +40,28 @@ $order_stats_stmt->close();
 
 // Get recent orders
 $recent_orders_stmt = $conn->prepare("SELECT * FROM orders WHERE userId = ? ORDER BY createdAt DESC LIMIT 5");
-$recent_orders_stmt->bind_param("i", $user_id);
-$recent_orders_stmt->execute();
-$recent_orders = $recent_orders_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$recent_orders_stmt->close();
+if (!$recent_orders_stmt) {
+    error_log("Error preparing recent orders statement: " . $conn->error);
+    $recent_orders = [];
+} else {
+    $recent_orders_stmt->bind_param("i", $user_id);
+    $recent_orders_stmt->execute();
+    $recent_orders = $recent_orders_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $recent_orders_stmt->close();
+}
 
 // Get wishlist count
 $wishlist_stmt = $conn->prepare("SELECT COUNT(*) as count FROM wishlist WHERE userId = ?");
-$wishlist_stmt->bind_param("i", $user_id);
-$wishlist_stmt->execute();
-$wishlist_result = $wishlist_stmt->get_result()->fetch_assoc();
-$wishlist_count = $wishlist_result['count'];
-$wishlist_stmt->close();
+if (!$wishlist_stmt) {
+    error_log("Error preparing wishlist statement: " . $conn->error);
+    $wishlist_count = 0;
+} else {
+    $wishlist_stmt->bind_param("i", $user_id);
+    $wishlist_stmt->execute();
+    $wishlist_result = $wishlist_stmt->get_result()->fetch_assoc();
+    $wishlist_count = $wishlist_result['count'] ?? 0;
+    $wishlist_stmt->close();
+}
 
 // Get favorite categories
 $favorite_cat_stmt = $conn->prepare("SELECT p.category, COUNT(*) as count
@@ -54,10 +72,15 @@ WHERE o.userId = ?
 GROUP BY p.category
 ORDER BY count DESC
 LIMIT 3");
-$favorite_cat_stmt->bind_param("i", $user_id);
-$favorite_cat_stmt->execute();
-$favorite_cats = $favorite_cat_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
-$favorite_cat_stmt->close();
+if (!$favorite_cat_stmt) {
+    error_log("Error preparing favorite categories statement: " . $conn->error);
+    $favorite_cats = [];
+} else {
+    $favorite_cat_stmt->bind_param("i", $user_id);
+    $favorite_cat_stmt->execute();
+    $favorite_cats = $favorite_cat_stmt->get_result()->fetch_all(MYSQLI_ASSOC);
+    $favorite_cat_stmt->close();
+}
 
 // Get status badge color
 function getStatusBadgeColor($status)

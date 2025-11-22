@@ -255,7 +255,7 @@ function addSecurityHeaders()
     header('X-XSS-Protection: 1; mode=block');
 
     // Content Security Policy
-    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com; font-src fonts.gstatic.com cdnjs.cloudflare.com; img-src 'self' data:;");
+    header("Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com; style-src 'self' 'unsafe-inline' cdn.jsdelivr.net cdnjs.cloudflare.com fonts.googleapis.com; font-src 'self' fonts.gstatic.com cdnjs.cloudflare.com cdn.jsdelivr.net; img-src 'self' data:; connect-src 'self' cdn.jsdelivr.net;");
 
     // Referrer Policy
     header('Referrer-Policy: strict-origin-when-cross-origin');
