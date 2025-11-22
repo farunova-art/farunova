@@ -5,6 +5,9 @@ $username = "appuser";           // Database user
 $password = "FarunovaPass@2025";               // Database password
 $db       = "farunova_ecommerce";         // Database name
 
+// Debug: Log connection attempt
+error_log("[" . date('Y-m-d H:i:s') . "] Attempting database connection to $server, user: $username, db: $db");
+
 // Create connection
 $conn = new mysqli($server, $username, $password, $db);
 
@@ -13,14 +16,28 @@ $conn->set_charset("utf8mb4");
 
 // Check connection
 if ($conn->connect_error) {
-    // Log error securely without exposing details to user
-    error_log("Database connection failed: " . $conn->connect_error);
+    // Log error with full details
+    $error_msg = "Database connection failed: " . $conn->connect_error;
+    error_log("[" . date('Y-m-d H:i:s') . "] " . $error_msg);
+
+    // Send error to browser console for debugging
+    echo "<script>console.error('DB Error: " . addslashes($conn->connect_error) . "');</script>";
+    echo "<script>console.error('Server: $server');</script>";
+    echo "<script>console.error('User: $username');</script>";
+    echo "<script>console.error('Database: $db');</script>";
+
     // Show user-friendly error
     die("Database connection failed. Please contact administrator. Error has been logged.");
 }
 
+// Log successful connection
+error_log("[" . date('Y-m-d H:i:s') . "] Database connection successful!");
+echo "<script>console.log('✓ Database connection established successfully');</script>";
+
 // Define base URL for the application
 define('BASE_URL', 'http://40.127.11.133/');
+
+echo "<script>console.log('BASE_URL: " . BASE_URL . "');</script>";
 
 // Enforce HTTPS in production
 if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
@@ -32,24 +49,68 @@ if (!isset($_SERVER['HTTPS']) || $_SERVER['HTTPS'] === 'off') {
 }
 
 // Include security helpers
+error_log("[" . date('Y-m-d H:i:s') . "] Including security.php from: " . __DIR__ . '/security.php');
+
+if (!file_exists(__DIR__ . '/security.php')) {
+    echo "<script>console.error('ERROR: security.php not found at " . __DIR__ . "/security.php');</script>";
+    error_log("ERROR: security.php not found!");
+    die("Security module missing!");
+}
+
 require_once(__DIR__ . '/security.php');
+echo "<script>console.log('✓ security.php loaded successfully');</script>";
 
 // Include Phase 3 libraries (Code Quality & Performance)
-require_once(__DIR__ . '/lib/Logger.php');
-require_once(__DIR__ . '/lib/Cache.php');
-require_once(__DIR__ . '/lib/ErrorHandler.php');
-require_once(__DIR__ . '/lib/Database.php');
-require_once(__DIR__ . '/lib/Validator.php');
-require_once(__DIR__ . '/lib/Helpers.php');
+$libs = array(
+    'Logger.php' => 'Logger',
+    'Cache.php' => 'CacheManager',
+    'ErrorHandler.php' => 'ErrorHandler',
+    'Database.php' => 'Database',
+    'Validator.php' => 'Validator',
+    'Helpers.php' => 'Helpers'
+);
+
+foreach ($libs as $file => $class) {
+    $path = __DIR__ . '/lib/' . $file;
+    if (file_exists($path)) {
+        require_once($path);
+        error_log("[" . date('Y-m-d H:i:s') . "] ✓ Loaded $file");
+    } else {
+        error_log("[" . date('Y-m-d H:i:s') . "] ⚠ Warning: $file not found");
+        echo "<script>console.warn('⚠ Optional library missing: $file');</script>";
+    }
+}
+
+echo "<script>console.log('✓ All available libraries loaded');</script>";
 
 // Initialize logger
-$logger = new Logger();
+try {
+    $logger = new Logger();
+    error_log("[" . date('Y-m-d H:i:s') . "] Logger initialized");
+    echo "<script>console.log('✓ Logger initialized');</script>";
+} catch (Exception $e) {
+    error_log("Logger initialization error: " . $e->getMessage());
+    echo "<script>console.warn('Logger not available: " . addslashes($e->getMessage()) . "');</script>";
+}
 
 // Initialize error handler
-ErrorHandler::init($logger);
+try {
+    ErrorHandler::init($logger ?? null);
+    error_log("[" . date('Y-m-d H:i:s') . "] ErrorHandler initialized");
+    echo "<script>console.log('✓ ErrorHandler initialized');</script>";
+} catch (Exception $e) {
+    error_log("ErrorHandler initialization error: " . $e->getMessage());
+}
 
 // Initialize cache
-$cache = new CacheManager();
+try {
+    $cache = new CacheManager();
+    error_log("[" . date('Y-m-d H:i:s') . "] Cache initialized");
+    echo "<script>console.log('✓ Cache initialized');</script>";
+} catch (Exception $e) {
+    error_log("Cache initialization error: " . $e->getMessage());
+    echo "<script>console.warn('Cache not available: " . addslashes($e->getMessage()) . "');</script>";
+}
 
 // Add security headers to all responses
 addSecurityHeaders();
