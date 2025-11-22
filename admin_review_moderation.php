@@ -1,5 +1,4 @@
 <?php
-session_start();
 include("connection.php");
 
 // Check if user is admin
@@ -12,7 +11,7 @@ if (!isset($_SESSION['isAdmin']) || !$_SESSION['isAdmin']) {
 if (isset($_POST['action'])) {
     $action = sanitizeInput($_POST['action']);
     $review_id = (int)$_POST['review_id'];
-    
+
     if ($action === 'approve') {
         $approve_stmt = $conn->prepare("UPDATE reviews SET isApproved = 1 WHERE id = ?");
         $approve_stmt->bind_param("i", $review_id);
@@ -81,6 +80,7 @@ $logger->info('Admin review moderation accessed', ['user' => $_SESSION['username
 
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -93,48 +93,48 @@ $logger->info('Admin review moderation accessed', ['user' => $_SESSION['username
             background-color: #f8f9fa;
             border-right: 1px solid #dee2e6;
         }
-        
+
         .review-card {
             background: white;
             border-left: 4px solid #088F8F;
             padding: 15px;
             margin-bottom: 15px;
             border-radius: 5px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
         }
-        
+
         .review-card.pending {
             border-left-color: #ffc107;
             background: #fffbf0;
         }
-        
+
         .review-card.approved {
             border-left-color: #28a745;
         }
-        
+
         .review-header {
             display: flex;
             justify-content: space-between;
             align-items: start;
             margin-bottom: 10px;
         }
-        
+
         .review-author {
             font-weight: 600;
             color: #2B547E;
         }
-        
+
         .review-rating {
             color: #FFB800;
             font-size: 14px;
         }
-        
+
         .review-actions {
             margin-top: 15px;
             padding-top: 15px;
             border-top: 1px solid #dee2e6;
         }
-        
+
         .stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -143,28 +143,29 @@ $logger->info('Admin review moderation accessed', ['user' => $_SESSION['username
             margin-bottom: 20px;
             text-align: center;
         }
-        
+
         .stat-card h5 {
             font-size: 12px;
             opacity: 0.9;
             margin-bottom: 10px;
             text-transform: uppercase;
         }
-        
+
         .stat-card .value {
             font-size: 28px;
             font-weight: bold;
         }
-        
+
         .stat-card.pending {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
         }
-        
+
         .stat-card.approved {
             background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
         }
     </style>
 </head>
+
 <body>
     <!-- Navigation -->
     <nav class="navbar navbar-dark" style="background-color: #2B547E;">
@@ -370,4 +371,5 @@ $logger->info('Admin review moderation accessed', ['user' => $_SESSION['username
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
+
 </html>

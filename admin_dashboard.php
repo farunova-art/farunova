@@ -1,5 +1,4 @@
 <?php
-session_start();
 include("connection.php");
 
 // Check if user is logged in and is admin
